@@ -1,6 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phone_otp/screens/home_screen.dart';
+import 'package:phone_otp/widgets/button.dart';
+
+import '../constants/color.dart';
+import '../widgets/validator.dart';
 
 enum OtpState { showmobileformState, showOtpFormState }
 
@@ -13,118 +18,135 @@ class Loginscreen extends StatefulWidget {
 
 class _LoginscreenState extends State<Loginscreen> {
   var currentState = OtpState.showmobileformState;
-  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
   final otpController = TextEditingController();
-
+  bool passwordVisible = false;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late String verificationId;
   bool isLoading = false;
 
-  Widget getMobileFormWidget(context) {
-    return Column(
-      children: [
-        Spacer(),
-        TextField(
-          controller: phoneController,
-          decoration: InputDecoration(hintText: 'Phone Number'),
-        ),
-        SizedBox(
-          height: 16,
-        ),
-        TextButton(
-            onPressed: () async {
-              setState(() {
-                isLoading = true;
-              });
-              await _auth.verifyPhoneNumber(
-                  phoneNumber: phoneController.text,
-                  verificationCompleted: (phoneAuthCredential) async {
-                    setState(() {
-                      isLoading = false;
-                    });
-                  },
-                  verificationFailed: (phoneVerificationFailed) async {
-                    setState(() {
-                      isLoading = false;
-                    });
-                    _scaffoldKey.currentState!.showSnackBar(SnackBar(
-                        content: Text(phoneVerificationFailed.message!)));
-                  },
-                  codeSent: (verificationId, resendingToken) async {
-                    setState(() {
-                      isLoading = false;
-                      currentState = OtpState.showOtpFormState;
-                      this.verificationId = verificationId;
-                    });
-                  },
-                  codeAutoRetrievalTimeout: (verificationId) async {});
+  Widget getMobileFormWidget() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Log in to get started',
+            style: TextStyle(
+                fontSize: 19, color: lowGrey, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          const Text(
+            'Experience the all new App!',
+            style: TextStyle(
+                fontSize: 19, color: lowGrey, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 40),
+          TextFormField(
+            validator: Validators().isEmpty,
+            controller: emailController,
+            // maxLength: 11,
+            decoration: kTextInputForm.copyWith(
+              prefixIcon: Image.asset('assets/email.png'),
+              hintText: 'deo@gmail.com',
+              label: const Text(
+                "E-mail ID",
+                style: TextStyle(color: lowGrey),
+              ),
+            ),
+
+            onChanged: (v) {
+              setState(() {});
             },
-            child: Text('Send')),
-        Spacer(),
-      ],
+            keyboardType: TextInputType.emailAddress,
+            style: const TextStyle(color: Colors.black),
+            cursorColor: Colors.black,
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          TextFormField(
+            validator: Validators().isEmpty,
+            controller: passwordController,
+            decoration: kTextInputForm.copyWith(
+              prefixIcon: Image.asset('assets/iconno.png'),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  passwordVisible ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.black,
+                ),
+                onPressed: () {
+                  setState(() {
+                    passwordVisible = !passwordVisible;
+                  });
+                },
+              ),
+              hintText: '******',
+              label: const Text(
+                "Password",
+                style: TextStyle(color: lowGrey),
+              ),
+            ),
+            onChanged: (v) {
+              setState(() {});
+            },
+            obscureText: passwordVisible,
+            keyboardType: TextInputType.visiblePassword,
+            style: const TextStyle(color: Colors.black),
+            cursorColor: Colors.black,
+          ),
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () => context.go('/'),
+              child: const Text(
+                "Use Mobile Number",
+                style: TextStyle(color: butColor),
+              ),
+            ),
+          ),
+          const Spacer(),
+          SizedBox(
+            child: GeneralButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // _navigationService.navigateTo(bookDeliveryRoute);
+                    context.go('/home');
+                  }
+                },
+                buttonText: "Login"),
+          )
+        ],
+      ),
     );
   }
 
-  getOtpFormWidget(context) {
-    return Column(
-      children: [
-        Spacer(),
-        TextField(
-          controller: otpController,
-          decoration: InputDecoration(hintText: 'Enter OTP'),
-        ),
-        SizedBox(
-          height: 16,
-        ),
-        TextButton(
-            onPressed: () async {
-              final phoneAuthCredential = PhoneAuthProvider.credential(
-                  verificationId: verificationId, smsCode: otpController.text);
-              signInWithPhone(phoneAuthCredential);
-            },
-            child: Text('Verify')),
-        Spacer(),
-      ],
-    );
-  }
-
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         key: _scaffoldKey,
+        backgroundColor: black,
         body: Container(
-            padding: EdgeInsets.all(50),
+            decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                )),
+            margin: const EdgeInsets.only(top: 20),
+            padding: const EdgeInsets.only(top: 50, left: 10, right: 10),
             child: isLoading
-                ? Center(
+                ? const Center(
                     child: CircularProgressIndicator(),
                   )
-                : currentState == OtpState.showmobileformState
-                    ? getMobileFormWidget(context)
-                    : getOtpFormWidget(context)));
-  }
-
-  void signInWithPhone(PhoneAuthCredential phoneAuthCredential) async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final authCredential =
-          await _auth.signInWithCredential(phoneAuthCredential);
-      setState(() {
-        isLoading = false;
-      });
-      if (authCredential.user != null) {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const HomeScreen()));
-      }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      _scaffoldKey.currentState!
-          .showSnackBar(SnackBar(content: Text(e.message!)));
-    }
+                : getMobileFormWidget()));
   }
 }
