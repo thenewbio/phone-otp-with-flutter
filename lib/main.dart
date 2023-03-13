@@ -3,10 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phone_otp/provider/auth_provider.dart';
+
 import 'package:phone_otp/screens/home_screen.dart';
 import 'package:phone_otp/screens/login_screen.dart';
 import 'package:phone_otp/screens/register_screen.dart';
+import 'package:phone_otp/screens/tic_tac_screen.dart';
+import 'package:phone_otp/screens/webview/web_view_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -32,7 +34,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
-        return RegisterScreen();
+        return const WebScreen();
       },
       routes: <RouteBase>[
         GoRoute(
@@ -57,19 +59,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (ctx) => Auth(),
-        ),
-      ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Phone OTP',
-        theme:
-            ThemeData(primarySwatch: Colors.pink, accentColor: Colors.purple),
-        routerConfig: _router,
-      ),
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Phone OTP',
+      theme:
+          ThemeData(primarySwatch: Colors.purple, accentColor: Colors.purple),
+      routerConfig: _router,
     );
   }
 }
